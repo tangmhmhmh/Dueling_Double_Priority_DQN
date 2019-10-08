@@ -68,3 +68,5 @@ class SumTree(object):
     @property#把方法转换成属性，这样调用total_p时不需要加括号~~有毛病，不加不也行么~~~~~~~~
     def total_p(self):
         return self.tree[0]  # the root
+if __name__=="__main__":
+    sumtree=SumTree(10)
