@@ -65,6 +65,6 @@ class SumTree(object):
         data_idx = leaf_idx - self.capacity + 1
         return leaf_idx, self.tree[leaf_idx], self.data[data_idx]
 
-    @property
+    @property#把方法转换成属性，这样调用total_p时不需要加括号~~有毛病，不加不也行么~~~~~~~~
     def total_p(self):
         return self.tree[0]  # the root
