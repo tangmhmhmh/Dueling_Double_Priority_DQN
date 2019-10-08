@@ -1,4 +1,4 @@
-from DQN.SumTree import SumTree
+from SumTree import SumTree
 import numpy as np
 class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
     """
@@ -43,4 +43,6 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
             self.tree.update(ti, p)
 if __name__=="__main__":
     memory=Memory(20)
-    print(memory.sample(2))
+    for i in range(100):
+        memory.store(np.array([i,i+1,i+2]))
+    pp=memory.sample(2)
