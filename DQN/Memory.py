@@ -31,7 +31,7 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
             v = np.random.uniform(a, b)
             idx, p, data = self.tree.get_leaf(v)
             prob = p / self.tree.total_p
-            ISWeights[i, 0] = np.power(prob/min_prob, -self.beta)
+            ISWeights[i, 0] = np.power(prob/min_prob, -self.beta)#power（a，b）=a^b 对矩阵内所有元素求b次方；  为什么这么求，这个值有什么用？
             b_idx[i], b_memory[i, :] = idx, data
         return b_idx, b_memory, ISWeights
 
@@ -41,3 +41,6 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
         ps = np.power(clipped_errors, self.alpha)
         for ti, p in zip(tree_idx, ps):
             self.tree.update(ti, p)
+if __name__=="__main__":
+    memory=Memory(20)
+    print(memory.sample(2))
