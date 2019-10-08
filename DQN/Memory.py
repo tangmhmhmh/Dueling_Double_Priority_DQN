@@ -15,9 +15,9 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
         self.tree = SumTree(capacity)
 
     def store(self, transition):
-        max_p = np.max(self.tree.tree[-self.tree.capacity:])
+        max_p = np.max(self.tree.tree[-self.tree.capacity:])#返回已有记忆中最大优先级
         if max_p == 0:
-            max_p = self.abs_err_upper
+            max_p = self.abs_err_upper#如果都等于0，则令最大值为1
         self.tree.add(max_p, transition)   # set the max p for new p
 
     def sample(self, n):

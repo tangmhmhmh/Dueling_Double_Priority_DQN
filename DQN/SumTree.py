@@ -19,6 +19,7 @@ class SumTree(object):
 
     def add(self, p, data):
         tree_idx = self.data_pointer + self.capacity - 1
+       # print(tree_idx,self.data_pointer)
         self.data[self.data_pointer] = data  # update data_frame
         self.update(tree_idx, p)  # update tree_frame
 
@@ -31,7 +32,7 @@ class SumTree(object):
         self.tree[tree_idx] = p
         # then propagate the change through tree
         while tree_idx != 0:    # this method is faster than the recursive loop in the reference code
-            tree_idx = (tree_idx - 1) // 2
+            tree_idx = (tree_idx - 1) // 2#10/3=3余1   10//3=1;  10%3=1
             self.tree[tree_idx] += change
 
     def get_leaf(self, v):
@@ -67,6 +68,11 @@ class SumTree(object):
 
     @property#把方法转换成属性，这样调用total_p时不需要加括号~~有毛病，不加不也行么~~~~~~~~
     def total_p(self):
-        return self.tree[0]  # the root
+        return self.tree[0]  # the roottangmhmhmh
 if __name__=="__main__":
     sumtree=SumTree(10)
+    for i in range(12):
+        sumtree.add(0.1*i,np.array([i,i+1]))
+    print(sumtree.tree[-10:])
+    print(sumtree.tree)
+    print(sumtree.data)
