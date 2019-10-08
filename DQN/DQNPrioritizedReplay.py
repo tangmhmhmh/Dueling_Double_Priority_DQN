@@ -1,6 +1,7 @@
 import numpy as np
 from DQN.Memory import Memory
 import tensorflow as tf
+
 class DQNPrioritizedReplay:
     def __init__(
             self,

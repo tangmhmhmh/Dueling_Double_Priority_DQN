@@ -9,11 +9,14 @@ Using:
 Tensorflow: 1.0
 gym: 0.7.3
 """
+'''
+综合了Dueling DQN,Double DQN 和Proiority replay 的DQN算法
+'''
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
+from Memory import Memory
 np.random.seed(1)
 tf.set_random_seed(1)
 
@@ -51,8 +54,8 @@ class DeepQNetwork:
         self.learn_step_counter = 0
 
         # initialize zero memory [s, a, r, s_]
-        self.memory = np.zeros((self.memory_size, n_features * 2 + 2))
-
+        #self.memory = np.zeros((self.memory_size, n_features * 2 + 2))
+        self.memory=Memory(self.memory_size)
         # consist of [target_net, evaluate_net]
         self._build_net()
         t_params = tf.get_collection('target_net_params')
@@ -105,11 +108,12 @@ class DeepQNetwork:
         # ------------------ build evaluate_net ------------------
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # input
         self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='Q_target')  # for calculating loss
+        self.ISWeights = tf.placeholder(tf.float32, [None, 1], name='IS_weights')
         c_names=['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-
         self.q_eval=self.add_net(self.s,c_name=c_names,name="eval_net")
         with tf.variable_scope('loss'):
-            self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
+            self.abs_errors = tf.reduce_sum(tf.abs(self.q_target - self.q_eval), axis=1)
+            self.loss = tf.reduce_mean(self.ISWeights * tf.squared_difference(self.q_target, self.q_eval))
         with tf.variable_scope('train'):
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
 
@@ -118,16 +122,8 @@ class DeepQNetwork:
         c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
         self.q_next=self.add_net(self.s_,c_names,"next_net")
     def store_transition(self, s, a, r, s_):
-        if not hasattr(self, 'memory_counter'):
-            self.memory_counter = 0
-
         transition = np.hstack((s, [a, r], s_))
-
-        # replace the old memory with new memory
-        index = self.memory_counter % self.memory_size
-        self.memory[index, :] = transition
-
-        self.memory_counter += 1
+        self.memory.store(transition)
 
     def choose_action(self, observation):
         # to have batch dimension when feed into tf placeholder
@@ -146,13 +142,7 @@ class DeepQNetwork:
         if self.learn_step_counter % self.replace_target_iter == 0:
             self.sess.run(self.replace_target_op)
             print('\ntarget_params_replaced\n')
-
-        if self.memory_counter > self.memory_size:
-            sample_index = np.random.choice(self.memory_size, size=self.batch_size)
-        else:
-            sample_index = np.random.choice(self.memory_counter, size=self.batch_size)
-        batch_memory = self.memory[sample_index, :]
-
+        tree_idx, batch_memory, ISWeights = self.memory.sample(self.batch_size)
         q_next, q_eval4next = self.sess.run(
             [self.q_next, self.q_eval],
             feed_dict={self.s_: batch_memory[:, -self.n_features:],  # next observation
@@ -169,10 +159,11 @@ class DeepQNetwork:
         selected_q_next = q_next[batch_index, max_act4next]  # Double DQN, select q_next depending on above actions
         q_target[batch_index, eval_act_index] = reward + self.gamma * selected_q_next
 
-        _, self.cost = self.sess.run([self._train_op, self.loss],
+        _,abs_errors, self.cost = self.sess.run([self._train_op, self.abs_errors,self.loss],
                                      feed_dict={self.s: batch_memory[:, :self.n_features],
-                                                self.q_target: q_target})
-
+                                                self.q_target: q_target,
+                                                self.ISWeights: ISWeights})
+        self.memory.batch_update(tree_idx,abs_errors)
         # increasing epsilon
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
