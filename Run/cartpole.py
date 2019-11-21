@@ -10,7 +10,7 @@ gym: 0.7.3
 import gym
 #from DQN.DDQN import Double_Dueling_DQN as DeepQNetwork#
 from DQN.DQN_Setting import DQN_Setting
-from DQN.DQN import DeepQNetwork
+from DQN.DDQN_priority import DeepQNetwork
 import matplotlib.pyplot as plt
 from time import time
 s=DQN_Setting()
